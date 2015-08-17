@@ -6,11 +6,13 @@ import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import io.liteglue.*;
+import io.liteglue.SQLiteNative;
 
 import java.io.File;
 
 import java.sql.SQLException;
+
+import android.database.Cursor;
 
 import com.test.db.*;
 import com.test.sqlc.*;
@@ -108,17 +110,36 @@ public class SQLiteConnectorTest extends Activity
     ListView lv1 = (ListView)findViewById(R.id.results);
     lv1.setAdapter(resultsAdapter);
 
-
 File dbfile = new File(this.getFilesDir(), "t1.db");
 String dbpath = dbfile.getAbsolutePath();
 
 SQLiteDatabase d1 = SQLiteDatabase.openOrCreateDatabase(dbpath, null);
 
+//Cursor c1 = d1.rawQuery("SELECT UPPER('Camel String') as uppertext", new String[0]);
+SQLiteCursorDriver cd1 = new SQLiteDirectCursorDriver(d1, "SELECT UPPER('Camel String') as uppertext", null, null);
+Cursor c1 = cd1.query(null, new String[0]);
+
+logResult("column count: " + c1.getColumnCount());
+checkIntegerResult("col count", c1.getColumnCount(), 1);
+if (c1 != null && c1.moveToFirst()) {
+logResult("position: " + c1.getPosition());
+logResult("column 1 name: " + c1.getColumnName(0));
+logResult("column 1 type: " + c1.getType(0));
+logResult("column 1 text [string]: " + c1.getString(0));
+}
+
 d1.execSQL("DROP TABLE IF EXISTS tt");
 d1.execSQL("CREATE TABLE tt (t1 TEXT);");
 d1.execSQL("INSERT INTO tt VALUES('hello');");
 
-//android.database.Cursor c = d1.raw
+cd1 = new SQLiteDirectCursorDriver(d1, "SELECT * from tt", null, null);
+c1 = cd1.query(null, new String[0]);
+if (c1 != null && c1.moveToFirst()) {
+logResult("position: " + c1.getPosition());
+logResult("column 1 name: " + c1.getColumnName(0));
+logResult("column 1 type: " + c1.getType(0));
+logResult("column 1 text [string]: " + c1.getString(0));
+}
 
 d1.close();
 

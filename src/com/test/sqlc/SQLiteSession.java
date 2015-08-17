@@ -16,7 +16,9 @@
 
 package com.test.sqlc;
 
-import android.database.CursorWindow;
+import com.test.db.CursorWindow;
+
+//import android.database.CursorWindow;
 import android.database.DatabaseUtils;
 import android.os.CancellationSignal;
 import android.os.OperationCanceledException;

@@ -16,8 +16,7 @@
 
 package com.test.db;
 
-import android.database.CursorWindow;
-
+// XXX FUTURE TBD (for getHexCollationKey):
 //import org.apache.commons.codec.binary.Hex;
 
 import android.database.AbstractWindowedCursor;
@@ -421,6 +420,7 @@ public class DatabaseUtils {
         }
     }
 
+    // XXX FUTURE TBD:
     /**
      * return the collation key in hex format
      * @param name

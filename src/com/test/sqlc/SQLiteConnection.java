@@ -18,6 +18,8 @@ package com.test.sqlc;
 
 import io.liteglue.*;
 
+import com.test.db.CursorWindow;
+
 import android.os.StrictMode;
 import com.test.db.CloseGuard;
 import com.test.db.DatabaseUtils;
@@ -27,7 +29,7 @@ import com.test.sqlc.SQLiteDebug.DbStats;
 //import dalvik.system.CloseGuard;
 
 import android.database.Cursor;
-import android.database.CursorWindow;
+//import android.database.CursorWindow;
 //import android.database.DatabaseUtils;
 //import android.database.sqlite.SQLiteDebug.DbStats;
 
@@ -218,7 +220,10 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
     private void open() {
 // XXX TODO MOVE:
     if (!isLibLoaded) {
-      System.loadLibrary("sqlc-native-driver");
+      //System.loadLibrary("sqlc-native-driver");
+      System.loadLibrary("stlport_shared");
+      System.loadLibrary("sqlcipher_android");
+      System.loadLibrary("database_sqlcipher");
       isLibLoaded = true;
     }
 
@@ -542,8 +547,10 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
                     } else {
                         outStatementInfo.columnNames = new String[columnCount];
                         for (int i = 0; i < columnCount; i++) {
-                            outStatementInfo.columnNames[i] = nativeGetColumnName(
-                                    mConnectionPtr, statement.mStatementPtr, i);
+                            //outStatementInfo.columnNames[i] = nativeGetColumnName(
+                            //        mConnectionPtr, statement.mStatementPtr, i);
+                            outStatementInfo.columnNames[i] = SQLiteNative.sqlc_st_column_name(
+                                    statement.mStatementPtr, i);
                         }
                     }
                 }
@@ -856,8 +863,8 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
     public int executeForCursorWindow(String sql, Object[] bindArgs,
             CursorWindow window, int startPos, int requiredPos, boolean countAllRows,
             CancellationSignal cancellationSignal) {
-        throw new UnsupportedOperationException("XXX TODO");
-/* XXX TODO:
+        //throw new UnsupportedOperationException("XXX TODO");
+        //*
         if (sql == null) {
             throw new IllegalArgumentException("sql must not be null.");
         }
@@ -868,7 +875,7 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
         window.acquireReference();
         try {
             int actualPos = -1;
-            int countedRows = -1;
+            //int countedRows = -1;
             int filledRows = -1;
             final int cookie = mRecentOperations.beginOperation("executeForCursorWindow",
                     sql, bindArgs);
@@ -880,14 +887,25 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
                     applyBlockGuardPolicy(statement);
                     attachCancellationSignal(cancellationSignal);
                     try {
-                        final long result = nativeExecuteForCursorWindow(
-                                mConnectionPtr, statement.mStatementPtr, window.mWindowPtr,
-                                startPos, requiredPos, countAllRows);
-                        actualPos = (int)(result >> 32);
-                        countedRows = (int)result;
+                        //final long result = nativeExecuteForCursorWindow(
+                        //        mConnectionPtr, statement.mStatementPtr, window.mWindowPtr,
+                        //        startPos, requiredPos, countAllRows);
+                        //actualPos = (int)(result >> 32);
+                        //countedRows = (int)result;
+
+                        actualPos = SQLiteNative.sqlc_query_fill_window(
+                                statement.mStatementPtr, window.nWindow,
+                                startPos, 0, (requiredPos - startPos + 10), requiredPos);
+                    Log.d(TAG, "actualPos: " + actualPos);
+
                         filledRows = window.getNumRows();
-                        window.setStartPosition(actualPos);
-                        return countedRows;
+                    Log.d(TAG, "filledRows: " + filledRows);
+                        //window.setStartPosition(actualPos);
+                        window.setStartPosition(0);
+
+                        // XXX TBD TODO ???:
+                        //return countedRows;
+                        return filledRows;
                     } finally {
                         detachCancellationSignal(cancellationSignal);
                     }
@@ -903,13 +921,14 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
                             + "', startPos=" + startPos
                             + ", actualPos=" + actualPos
                             + ", filledRows=" + filledRows
-                            + ", countedRows=" + countedRows);
+                            );
+                            //+ ", countedRows=" + countedRows);
                 }
             }
         } finally {
             window.releaseReference();
         }
-*/
+        // */
     }
 
     private PreparedStatement acquirePreparedStatement(String sql) {
@@ -1174,7 +1193,9 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
         // Get information about attached databases.
         // We ignore the first row in the database list because it corresponds to
         // the main database which we have already described.
-        CursorWindow window = new CursorWindow("collectDbStats");
+        // XXX TBD ???:
+        //CursorWindow window = new CursorWindow("collectDbStats");
+        CursorWindow window = new CursorWindow(false);
         try {
             executeForCursorWindow("PRAGMA database_list;", null, window, 0, 0, false, null);
             for (int i = 1; i < window.getNumRows(); i++) {

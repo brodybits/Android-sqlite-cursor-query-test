@@ -16,11 +16,13 @@
 
 package com.test.sqlc;
 
+import com.test.db.CursorWindow;
 import com.test.db.DatabaseUtils;
 
 import android.database.AbstractWindowedCursor;
-import android.database.CursorWindow;
+//import android.database.CursorWindow;
 //import android.database.DatabaseUtils;
+
 import android.os.StrictMode;
 import android.util.Log;
 
@@ -96,13 +98,13 @@ public class SQLiteCursor extends AbstractWindowedCursor {
         if (query == null) {
             throw new IllegalArgumentException("query object cannot be null");
         }
-/* XXX TODO:
+/* FUTURE TBD (???):
         if (StrictMode.vmSqliteObjectLeaksEnabled()) {
             mStackTrace = new DatabaseObjectNotClosedException().fillInStackTrace();
         } else {
 */
             mStackTrace = null;
-/* XXX TODO:
+/* FUTURE TBD (???):
         }
 */
         mDriver = driver;
@@ -142,14 +144,22 @@ public class SQLiteCursor extends AbstractWindowedCursor {
     }
 
     private void fillWindow(int requiredPos) {
-        throw new UnsupportedOperationException("sdfkl");
-/* XXX TODO:
-        clearOrCreateWindow(getDatabase().getPath());
+        //clearOrCreateWindow(getDatabase().getPath());
+        if (mWindow == null) {
+            //mWindow = new CursorWindow(name);
+            mWindow = new CursorWindow(false);
+        } else {
+            mWindow.clear();
+        }
+
+        // XXX TBD: should this be checked somewhere (??)
+        CursorWindow myWindow = (CursorWindow)mWindow;
 
         try {
             if (mCount == NO_COUNT) {
                 int startPos = DatabaseUtils.cursorPickFillWindowStartPosition(requiredPos, 0);
-                mCount = mQuery.fillWindow(mWindow, startPos, requiredPos, true);
+                //mCount = mQuery.fillWindow(mWindow, startPos, requiredPos, true);
+                mCount = mQuery.fillWindow(myWindow, startPos, requiredPos, true);
                 mCursorWindowCapacity = mWindow.getNumRows();
                 if (Log.isLoggable(TAG, Log.DEBUG)) {
                     Log.d(TAG, "received count(*) from native_fill_window: " + mCount);
@@ -157,17 +167,21 @@ public class SQLiteCursor extends AbstractWindowedCursor {
             } else {
                 int startPos = DatabaseUtils.cursorPickFillWindowStartPosition(requiredPos,
                         mCursorWindowCapacity);
-                mQuery.fillWindow(mWindow, startPos, requiredPos, false);
+                //mQuery.fillWindow(mWindow, startPos, requiredPos, false);
+                mQuery.fillWindow(myWindow, startPos, requiredPos, false);
             }
         } catch (RuntimeException ex) {
             // Close the cursor window if the query failed and therefore will
             // not produce any results.  This helps to avoid accidentally leaking
             // the cursor window if the client does not correctly handle exceptions
             // and fails to close the cursor.
-            closeWindow();
+            //closeWindow();
+            if (mWindow != null) {
+                mWindow.close();
+                mWindow = null;
+            }
             throw ex;
         }
-*/
     }
 
     @Override
@@ -249,7 +263,8 @@ public class SQLiteCursor extends AbstractWindowedCursor {
     }
 
     @Override
-    public void setWindow(CursorWindow window) {
+    public void setWindow(android.database.CursorWindow window) {
+        // XXX FUTURE TBD: check that window is instance of correct CursorWindow (???)
         super.setWindow(window);
         mCount = NO_COUNT;
     }
@@ -269,7 +284,7 @@ public class SQLiteCursor extends AbstractWindowedCursor {
         try {
             // if the cursor hasn't been closed yet, close it first
             if (mWindow != null) {
-/* XXX TODO:
+/* FUTURE TBD (???):
                 if (mStackTrace != null) {
                     String sql = mQuery.getSql();
                     int len = sql.length();
