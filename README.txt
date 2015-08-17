@@ -5,6 +5,7 @@ License: Apache 2.0 (using SQLiteNative interface which is UNLICENSE [public dom
 Now tested working OK:
 - Very simple CREATE/INSERT sql statements
 - (Very) simple Cursor queries
+- Simple string bindings
 
 ```Java
 java.io.File dbfile = new java.io.File(this.getFilesDir(), "t1.db");
@@ -25,7 +26,7 @@ if (c1 != null && c1.moveToFirst()) {
 // populate database using com.test.sqlc.SQLiteDatabase:
 d1.execSQL("DROP TABLE IF EXISTS tt");
 d1.execSQL("CREATE TABLE tt (t1 TEXT);");
-d1.execSQL("INSERT INTO tt VALUES('hello');");
+d1.execSQL("INSERT INTO tt VALUES(?),(?);", new String[]{"Hello", "world"});
 
 // Check contents using query through com.test.sqlc.SQLiteDirectCursorDriver:
 com.test.sqlc.SQLiteCursorDriver cd1 = new com.test.sqlc.SQLiteDirectCursorDriver(d1, "SELECT * from tt", null, null);
@@ -35,6 +36,9 @@ if (c1 != null && c1.moveToFirst()) {
   android.util.Log.e("Test", "column 1 name: " + c1.getColumnName(0));
   android.util.Log.e("Test", "column 1 type: " + c1.getType(0));
   android.util.Log.e("Test", "column 1 text [string]: " + c1.getString(0));
+  while(c1.moveToNext()) {
+    android.util.Log.e("Test", "column 1 text [string]: " + c1.getString(0));
+  }
 }
 
 d1.close();

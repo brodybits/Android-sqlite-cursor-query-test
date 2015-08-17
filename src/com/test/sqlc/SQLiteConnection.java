@@ -1081,7 +1081,8 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
                         nativeBindLong(mConnectionPtr, statementPtr, i + 1,
                                 ((Boolean)arg).booleanValue() ? 1 : 0);
                     } else {
-                        nativeBindString(mConnectionPtr, statementPtr, i + 1, arg.toString());
+                        //nativeBindString(mConnectionPtr, statementPtr, i + 1, arg.toString());
+                        SQLiteNative.sqlc_st_bind_text_native(statementPtr, i+1, arg.toString());
                     }
                     break;
             }

@@ -130,7 +130,7 @@ logResult("column 1 text [string]: " + c1.getString(0));
 
 d1.execSQL("DROP TABLE IF EXISTS tt");
 d1.execSQL("CREATE TABLE tt (t1 TEXT);");
-d1.execSQL("INSERT INTO tt VALUES('hello');");
+d1.execSQL("INSERT INTO tt VALUES(?),(?);", new String[]{"Hello", "world"});
 
 cd1 = new SQLiteDirectCursorDriver(d1, "SELECT * from tt", null, null);
 c1 = cd1.query(null, new String[0]);
@@ -139,6 +139,9 @@ logResult("position: " + c1.getPosition());
 logResult("column 1 name: " + c1.getColumnName(0));
 logResult("column 1 type: " + c1.getType(0));
 logResult("column 1 text [string]: " + c1.getString(0));
+while(c1.moveToNext()) {
+logResult("column 1 text [string]: " + c1.getString(0));
+}
 }
 
 d1.close();
