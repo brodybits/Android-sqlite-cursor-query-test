@@ -19,7 +19,7 @@ package com.test.db;
 // XXX FUTURE TBD (for getHexCollationKey):
 //import org.apache.commons.codec.binary.Hex;
 
-import android.database.AbstractWindowedCursor;
+//import android.database.AbstractWindowedCursor;
 import android.database.Cursor;
 import android.database.SQLException;
 

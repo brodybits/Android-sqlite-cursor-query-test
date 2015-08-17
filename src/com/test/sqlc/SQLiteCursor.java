@@ -16,13 +16,13 @@
 
 package com.test.sqlc;
 
+import com.test.db.AbstractWindowedCursor;
 import com.test.db.CursorWindow;
 import com.test.db.DatabaseUtils;
 
-import android.database.AbstractWindowedCursor;
+//import android.database.AbstractWindowedCursor;
 //import android.database.CursorWindow;
 //import android.database.DatabaseUtils;
-
 import android.os.StrictMode;
 import android.util.Log;
 
@@ -146,7 +146,7 @@ public class SQLiteCursor extends AbstractWindowedCursor {
     private void fillWindow(int requiredPos) {
         //clearOrCreateWindow(getDatabase().getPath());
         if (mWindow == null) {
-            //mWindow = new CursorWindow(name);
+            // XXX FUTURE TBD new CursorWindow(name) currently not supported
             mWindow = new CursorWindow(false);
         } else {
             mWindow.clear();
