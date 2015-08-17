@@ -1,8 +1,9 @@
-Android sqite database classes now working on a special version of Android-sqlite-native-driver (JNI interface using Gluegen)
+Android sqite database classes from android-m-preview-1 tag now *partially* working on a special version of Android-sqlite-native-driver (JNI interface using Gluegen)
 
 License: Apache 2.0 (using SQLiteNative interface which is UNLICENSE [public domain])
 
-Very simple CREATE/INSERT sql working
+Now tested working OK:
+- Very simple CREATE/INSERT sql statements
 
 ```Java
 java.io.File dbfile = new java.io.File(this.getFilesDir(), "t1.db");
