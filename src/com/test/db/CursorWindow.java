@@ -44,6 +44,7 @@ import android.util.SparseIntArray;
 public class CursorWindow extends android.database.CursorWindow implements Parcelable {
     private static final String STATS_TAG = "CursorWindowStats";
 
+    // XXX FUTURE TBD:
     /** The cursor window size. resource xml file specifies the value in kB.
      * convert it to bytes here by multiplying with 1024.
      */
@@ -104,12 +105,13 @@ public class CursorWindow extends android.database.CursorWindow implements Parce
         super(false);
 
         mStartPos = 0;
-        mName = name;
-        mWindowPtr = nativeCreate(name, sCursorWindowSize);
+        mName = name != null && name.length() != 0 ? name : "<unnamed>";
+        mWindowPtr = nativeCreate(mName, sCursorWindowSize);
         if (mWindowPtr == 0) {
             //throw new CursorWindowAllocationException("Cursor window allocation of " +
             //        (sCursorWindowSize / 1024) + " kb failed. " + printStats());
-            throw new RuntimeException("sdfa");
+            throw new RuntimeException("Cursor window allocation of " +
+                    (sCursorWindowSize / 1024) + " kb failed. " + printStats());
         }
         mCloseGuard.open("close");
         recordNewWindow(Binder.getCallingPid(), mWindowPtr);
@@ -136,15 +138,19 @@ public class CursorWindow extends android.database.CursorWindow implements Parce
     private CursorWindow(Parcel source) {
         super(false);
 
+        // XXX FUTURE TODO:
+        throw new UnsupportedOperationException("Sorry");
+
+/*
         mStartPos = source.readInt();
         mWindowPtr = nativeCreateFromParcel(source);
         if (mWindowPtr == 0) {
-            //throw new CursorWindowAllocationException("Cursor window could not be "
-            //        + "created from binder.");
-            throw new RuntimeException("sdfa");
+            throw new CursorWindowAllocationException("Cursor window could not be "
+                    + "created from binder.");
         }
         mName = nativeGetName(mWindowPtr);
         mCloseGuard.open("close");
+*/
     }
 
     @Override
@@ -171,7 +177,7 @@ public class CursorWindow extends android.database.CursorWindow implements Parce
     }
 
     /**
-     * Gets the name of this cursor window.
+     * Gets the name of this cursor window, never null.
      * @hide
      */
     public String getName() {
@@ -181,7 +187,9 @@ public class CursorWindow extends android.database.CursorWindow implements Parce
     /**
      * Closes the cursor window and frees its underlying resources when all other
      * remaining references have been released.
+     * @hide
      */
+    @Deprecated
     public void close() {
         releaseReference();
     }
@@ -693,6 +701,7 @@ public class CursorWindow extends android.database.CursorWindow implements Parce
         }
     }
 
+    // XXX FUTURE TBD:
 /*
     public static final Parcelable.Creator<CursorWindow> CREATOR
             = new Parcelable.Creator<CursorWindow>() {
@@ -715,8 +724,13 @@ public class CursorWindow extends android.database.CursorWindow implements Parce
     }
 
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeInt(mStartPos);
-        nativeWriteToParcel(mWindowPtr, dest);
+        acquireReference();
+        try {
+            dest.writeInt(mStartPos);
+            nativeWriteToParcel(mWindowPtr, dest);
+        } finally {
+            releaseReference();
+        }
 
         if ((flags & Parcelable.PARCELABLE_WRITE_RETURN_VALUE) != 0) {
             releaseReference();
