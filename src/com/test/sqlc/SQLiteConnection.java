@@ -894,7 +894,7 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
                         //countedRows = (int)result;
 
                         actualPos = SQLiteNative.sqlc_query_fill_window(
-                                statement.mStatementPtr, window.mWindowPtr, //window.nWindow,
+                                statement.mStatementPtr, (int)window.mWindowPtr, // XXX FIXME LOSSY
                                 startPos, 0, (requiredPos - startPos + 10), requiredPos);
                     Log.d(TAG, "actualPos: " + actualPos);
 
