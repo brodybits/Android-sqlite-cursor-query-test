@@ -14,9 +14,6 @@ import java.sql.SQLException;
 
 import android.database.Cursor;
 
-import com.test.db.*;
-import com.test.sqlc.*;
-
 public class SQLiteConnectorTest extends Activity
 {
   ArrayAdapter<String> resultsAdapter;
@@ -88,6 +85,11 @@ public class SQLiteConnectorTest extends Activity
     resultsAdapter.add(result);
   }
 
+  /* package */ void logV(String module, String result) {
+    android.util.Log.v(module, result);
+    resultsAdapter.add(result);
+  }
+
   /* package */ void logError(String result) {
     logErrorItem(result);
     ++errorCount;
@@ -110,277 +112,69 @@ public class SQLiteConnectorTest extends Activity
     ListView lv1 = (ListView)findViewById(R.id.results);
     lv1.setAdapter(resultsAdapter);
 
-File dbfile = new File(this.getFilesDir(), "t1.db");
+// Sample test code now working
+// ============================
+
+java.io.File dbfile = new java.io.File(this.getFilesDir(), "t1.db");
 String dbpath = dbfile.getAbsolutePath();
 
-SQLiteDatabase d1 = SQLiteDatabase.openOrCreateDatabase(dbpath, null);
+com.test.sqlc.SQLiteDatabase d1 = com.test.sqlc.SQLiteDatabase.openOrCreateDatabase(dbpath, null);
 
-//Cursor c1 = d1.rawQuery("SELECT UPPER('Camel String') as uppertext", new String[0]);
-SQLiteCursorDriver cd1 = new SQLiteDirectCursorDriver(d1, "SELECT UPPER('Camel String') as uppertext", null, null);
-Cursor c1 = cd1.query(null, new String[0]);
-
-logResult("column count: " + c1.getColumnCount());
-checkIntegerResult("col count", c1.getColumnCount(), 1);
+// Simple string query test (using com.test.sqlc.SQLiteDatabase.rawQuery() function)
+android.database.Cursor c1 = d1.rawQuery("SELECT UPPER('Camel String') as uppertext", new String[0]);
+logV("Test", "column count: " + c1.getColumnCount()); // should be 1
 if (c1 != null && c1.moveToFirst()) {
-logResult("position: " + c1.getPosition());
-logResult("column 1 name: " + c1.getColumnName(0));
-logResult("column 1 type: " + c1.getType(0));
-logResult("column 1 text [string]: " + c1.getString(0));
+  logV("Test", "position: " + c1.getPosition());
+  logV("Test", "column 1 name: " + c1.getColumnName(0));
+  logV("Test", "column 1 type: " + c1.getType(0));
+  logV("Test", "column 1 text [string]: " + c1.getString(0));
 }
 
+// populate database using com.test.sqlc.SQLiteDatabase:
 d1.execSQL("DROP TABLE IF EXISTS tt");
 d1.execSQL("CREATE TABLE tt (t1 TEXT);");
 d1.execSQL("INSERT INTO tt VALUES(?),(?);", new String[]{"Hello", "world"});
 
-cd1 = new SQLiteDirectCursorDriver(d1, "SELECT * from tt", null, null);
+// Check contents using query through com.test.sqlc.SQLiteDirectCursorDriver:
+com.test.sqlc.SQLiteCursorDriver cd1 = new com.test.sqlc.SQLiteDirectCursorDriver(d1, "SELECT * from tt", null, null);
 c1 = cd1.query(null, new String[0]);
 if (c1 != null && c1.moveToFirst()) {
-logResult("position: " + c1.getPosition());
-logResult("column 1 name: " + c1.getColumnName(0));
-logResult("column 1 type: " + c1.getType(0));
-logResult("column 1 text [string]: " + c1.getString(0));
-while(c1.moveToNext()) {
-logResult("column 1 text [string]: " + c1.getString(0));
-}
+  logV("Test", "position: " + c1.getPosition());
+  logV("Test", "column 1 name: " + c1.getColumnName(0));
+  logV("Test", "column 1 type: " + c1.getType(0));
+  logV("Test", "column 1 text [string]: " + c1.getString(0));
+  while(c1.moveToNext()) {
+    logV("Test", "column 1 text [string]: " + c1.getString(0));
+  }
 }
 
 d1.close();
 
-long mydbc = SQLiteNative.sqlc_db_open(dbpath, SQLiteNative.SQLC_OPEN_READWRITE);
+// Check contents again using io.liteglue.SQLiteNative:
+long mydbc = io.liteglue.SQLiteNative.sqlc_db_open(dbpath, io.liteglue.SQLiteNative.SQLC_OPEN_READWRITE);
 if (mydbc < 0) throw new RuntimeException("could not open db");
 
-long myst = SQLiteNative.sqlc_db_prepare_st(mydbc, "SELECT * FROM tt");
+long myst = io.liteglue.SQLiteNative.sqlc_db_prepare_st(mydbc, "SELECT * FROM tt");
 if (myst < 0) throw new RuntimeException("could not open db");
 
-long sr = SQLiteNative.sqlc_st_step(myst);
-while (sr == SQLiteNative.SQLC_RESULT_ROW) {
-int cc = SQLiteNative.sqlc_st_column_count(myst);
-logResult("column count: " + cc);
+long sr = io.liteglue.SQLiteNative.sqlc_st_step(myst);
+while (sr == io.liteglue.SQLiteNative.SQLC_RESULT_ROW) {
+  int cc = io.liteglue.SQLiteNative.sqlc_st_column_count(myst);
+  logV("Test", "column count: " + cc);
 
-for (int col=0; col < cc; ++col) {
-String colname = SQLiteNative.sqlc_st_column_name(myst, col);
-logResult("column " + col + " name: " + colname);
-String coltext = SQLiteNative.sqlc_st_column_text_native(myst, col);
-logResult("column " + col + " text: " + coltext);
+  for (int col=0; col < cc; ++col) {
+    String colname = io.liteglue.SQLiteNative.sqlc_st_column_name(myst, col);
+    logV("Test", "column " + col + " name: " + colname);
+    String coltext = io.liteglue.SQLiteNative.sqlc_st_column_text_native(myst, col);
+    logV("Test", "column " + col + " text: " + coltext);
 
-sr = SQLiteNative.sqlc_st_step(myst);
-
+    sr = io.liteglue.SQLiteNative.sqlc_st_step(myst);
+  }
 }
-}
 
-SQLiteNative.sqlc_st_finish(myst);
+io.liteglue.SQLiteNative.sqlc_st_finish(myst);
 
-SQLiteNative.sqlc_db_close(mydbc);
-
-  //  try {
-  //    runTest();
-  //  } catch (java.sql.SQLException ex) {
-  //    android.util.Log.w("SQLiteGlueTest", "unexpected sql exception", ex);
-  //    r1.add("unexpected sql exception" + ex);
-  //    return;
-  //  } catch (java.lang.Exception ex) {
-  //    android.util.Log.w("SQLiteGlueTest", "unexpected exception", ex);
-  //    r1.add("unexpected exception: " + ex);
-  //    return;
-  //  }
-  //}
-
-  ///* package */ void runTest() {
-/*
-    try {
-
-    SQLiteConnector myconnector = new SQLiteConnector();
-
-    File dbfile = new File(getFilesDir(), "mytest.db");
-
-    SQLiteConnection mydbc = null;
-
-    try {
-      mydbc = myconnector.newSQLiteConnection(dbfile.getAbsolutePath(),
-        SQLiteOpenFlags.READWRITE | SQLiteOpenFlags.CREATE);
-    } catch (SQLException ex) {
-      logUnexpectedException("DB open exception", ex);
-      return;
-    }
-
-    SQLiteStatement mystatement;
-
-    try {
-      mystatement = mydbc.prepareStatement("SELECT UPPER('How about some ascii text?') AS caps");
-    } catch (SQLException ex) {
-      logUnexpectedException("prepare statement exception", ex);
-      mydbc.dispose();
-      return;
-    }
-
-    mystatement.step();
-
-    int mycolcount = mystatement.getColumnCount();
-    checkIntegerResult("SELECT UPPER() column count: ", mycolcount, 1);
-
-    if (mycolcount > 0) {
-      String colname = mystatement.getColumnName(0);
-      checkStringResult("SELECT UPPER() caps column name", colname, "caps");
-
-      int coltype = mystatement.getColumnType(0);
-      checkIntegerResult("SELECT UPPER() caps column type", coltype, 3);
-
-      String coltext = mystatement.getColumnTextNativeString(0);
-      checkStringResult("SELECT UPPER() as caps", coltext, "HOW ABOUT SOME ASCII TEXT?");
-    }
-
-    mystatement.dispose();
-
-    try {
-      mystatement = mydbc.prepareStatement("DROP TABLE IF EXISTS mytable;");
-    } catch (SQLException ex) {
-      logUnexpectedException("prepare statement exception", ex);
-      mydbc.dispose();
-      return;
-    }
-    mystatement.step();
-    mystatement.dispose();
-
-    try {
-      mystatement = mydbc.prepareStatement("CREATE TABLE IF NOT EXISTS mytable (text1 TEXT, num1 INTEGER, num2 INTEGER, real1 REAL)");
-    } catch (SQLException ex) {
-      logUnexpectedException("prepare statement exception", ex);
-      mydbc.dispose();
-      return;
-    }
-    mystatement.step();
-    mystatement.dispose();
-
-    try {
-      mystatement = mydbc.prepareStatement("INSERT INTO mytable (text1, num1, num2, real1) VALUES (?,?,?,?)");
-
-      // should not get here:
-    } catch (SQLException ex) {
-      logUnexpectedException("prepare statement exception (not expected)", ex);
-      mydbc.dispose();
-      return;
-    }
-    mystatement.bindTextNativeString(1, "test");
-    mystatement.bindInteger(2, 10100);
-    mystatement.bindLong(3, 0x1230000abcdL);
-    mystatement.bindDouble(4, 123456.789);
-
-    boolean keep_going = mystatement.step();
-    while (keep_going) {
-      logError("ERROR: ROW result NOT EXPECTED for INSERT");
-      keep_going = mystatement.step();
-    }
-    mystatement.dispose();
-
-    try {
-      mystatement = mydbc.prepareStatement("SELECT * FROM mytable;");
-    } catch (SQLException ex) {
-      logUnexpectedException("prepare statement exception", ex);
-      mydbc.dispose();
-      return;
-    }
-
-    keep_going = mystatement.step();
-    checkBooleanResult("SELECT step result (keep_going flag)", keep_going, true);
-    if (keep_going) {
-      int colcount = mystatement.getColumnCount();
-      checkIntegerResult("SELECT column count", colcount, 4);
-
-      if (colcount >= 3) {
-        int colid = 0;
-        String colname;
-        int coltype;
-        String coltext;
-        int intval;
-        long longval;
-        double doubleval;
-
-        colname = mystatement.getColumnName(colid);
-        checkStringResult("SELECT column " + colid + " name", colname, "text1");
-
-        coltype = mystatement.getColumnType(colid);
-        checkIntegerResult("SELECT column " + colid + " type", coltype, SQLColumnType.TEXT);
-
-        coltext = mystatement.getColumnTextNativeString(colid);
-        checkStringResult("SELECT column " + colid + " text string", coltext, "test");
-
-        ++colid;
-
-        colname = mystatement.getColumnName(colid);
-        checkStringResult("SELECT column " + colid + " name", colname, "num1");
-
-        coltype = mystatement.getColumnType(colid);
-        checkIntegerResult("SELECT column " + colid + " type", coltype, SQLColumnType.INTEGER);
-
-        coltext = mystatement.getColumnTextNativeString(colid);
-        checkStringResult("SELECT column " + colid + " text string", coltext, "10100");
-        intval = mystatement.getColumnInteger(colid);
-        checkIntegerResult("SELECT column " + colid + " int value", intval, 10100);
-        longval = mystatement.getColumnLong(colid);
-        checkLongResult("SELECT column " + colid + " long value", longval, 10100);
-
-        ++colid;
-
-        colname = mystatement.getColumnName(colid);
-        checkStringResult("SELECT column " + colid + " name", colname, "num2");
-
-        coltype = mystatement.getColumnType(colid);
-        checkIntegerResult("SELECT column " + colid + " type", coltype, SQLColumnType.INTEGER);
-
-        longval = mystatement.getColumnLong(colid);
-        checkLongResult("SELECT column " + colid + " long value", longval, 0x1230000abcdL);
-
-        ++colid;
-
-        colname = mystatement.getColumnName(colid);
-        checkStringResult("SELECT column " + colid + " name", colname, "real1");
-
-        coltype = mystatement.getColumnType(colid);
-        checkIntegerResult("SELECT column " + colid + " type", coltype, SQLColumnType.REAL);
-
-        coltext = mystatement.getColumnTextNativeString(colid);
-        checkStringResult("SELECT column " + colid + " text string", coltext, "123456.789");
-        doubleval = mystatement.getColumnDouble(colid);
-        checkDoubleResult("SELECT column " + colid + " double (real) value", doubleval, 123456.789);
-      }
-
-      keep_going = mystatement.step();
-    }
-    checkBooleanResult("SELECT step result (keep_going flag)", keep_going, false);
-
-    mystatement.dispose();
-
-    mydbc.dispose();
-
-    // try to reopen database:
-    try {
-      mydbc = myconnector.newSQLiteConnection(dbfile.getAbsolutePath(),
-        SQLiteOpenFlags.READWRITE | SQLiteOpenFlags.CREATE);
-    } catch (SQLException ex) {
-      logUnexpectedException("DB open exception", ex);
-      return;
-    }
-
-    // try to cleanup the table:
-    try {
-      mystatement = mydbc.prepareStatement("DROP TABLE IF EXISTS mytable;");
-    } catch (SQLException ex) {
-      logUnexpectedException("prepare statement exception", ex);
-      mydbc.dispose();
-      return;
-    }
-    mystatement.step();
-    mystatement.dispose();
-
-    mydbc.dispose();
-
-    checkIntegerResult("TEST error count", errorCount, 0);
-
-    } catch (java.lang.Exception ex) {
-      logUnexpectedException("unexpected exception", ex);
-      return;
-    }
-*/
+io.liteglue.SQLiteNative.sqlc_db_close(mydbc);
 
   }
 }
