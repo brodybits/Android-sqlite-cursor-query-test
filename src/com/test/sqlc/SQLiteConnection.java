@@ -847,9 +847,7 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
      * @param bindArgs The arguments to bind, or null if none.
      * @param window The cursor window to clear and fill.
      * @param startPos The start position for filling the window.
-     * @param requiredPos The position of a row that MUST be in the window.
-     * If it won't fit, then the query should discard part of what it filled
-     * so that it does.  Must be greater than or equal to <code>startPos</code>.
+     * @param requiredPos XXX TBD IGNORED
      * @param countAllRows True to count all rows that the query would return
      * regagless of whether they fit in the window.
      * @param cancellationSignal A signal to cancel the operation in progress, or null if none.
@@ -863,8 +861,6 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
     public int executeForCursorWindow(String sql, Object[] bindArgs,
             CursorWindow window, int startPos, int requiredPos, boolean countAllRows,
             CancellationSignal cancellationSignal) {
-        //throw new UnsupportedOperationException("XXX TODO");
-        //*
         if (sql == null) {
             throw new IllegalArgumentException("sql must not be null.");
         }
@@ -893,13 +889,13 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
                         //actualPos = (int)(result >> 32);
                         //countedRows = (int)result;
 
-                        actualPos = SQLiteNative.sqlc_query_fill_window(
-                                statement.mStatementPtr, (int)window.mWindowPtr, // XXX FIXME LOSSY
-                                startPos, 0, (requiredPos - startPos + 10), requiredPos);
-                    Log.d(TAG, "actualPos: " + actualPos);
+                        actualPos = SQLiteNative.sqlc_db_query_fill_window(
+                                mConnectionPtr, statement.mStatementPtr, window.mWindowPtr,
+                                startPos, 0);
+                        //Log.d(TAG, "actualPos: " + actualPos);
 
                         filledRows = window.getNumRows();
-                    Log.d(TAG, "filledRows: " + filledRows);
+                        //Log.d(TAG, "filledRows: " + filledRows);
                         //window.setStartPosition(actualPos);
                         window.setStartPosition(0);
 
@@ -928,7 +924,6 @@ public final class SQLiteConnection implements CancellationSignal.OnCancelListen
         } finally {
             window.releaseReference();
         }
-        // */
     }
 
     private PreparedStatement acquirePreparedStatement(String sql) {
